@@ -5,7 +5,25 @@ description: Interact with HFSQL databases (PC SOFT / WinDev) via the hfsql MCP 
 
 # HFSQL Database Skill
 
-You have access to an HFSQL MCP server that provides 8 tools for full database interaction via PowerShell ODBC.
+You have access to an HFSQL MCP server that provides 8 tools for full database interaction via PowerShell ODBC. The server auto-detects PowerShell 7 (`pwsh`) or falls back to Windows PowerShell 5.1 (`powershell.exe`).
+
+## Prerequisites
+
+- **Windows** (any version with PowerShell 5.1+ — PowerShell 7 is preferred but not required)
+- **HFSQL ODBC driver** installed (PC SOFT — comes with WinDev or standalone)
+- **Node.js** 18+
+- An **ODBC DSN** configured in Windows ODBC Data Source Administrator
+
+### Install the MCP server
+
+```bash
+claude mcp add hfsql -- npx hfsql-mcp
+```
+
+Or via npm:
+```bash
+npm install -g hfsql-mcp
+```
 
 ## Tools Reference
 
@@ -136,13 +154,27 @@ Documents are linked via `MT_Associer` (source → generated). Payments link via
 | Garbled date (e.g. `07/20/0005`) | Wrong date format | Use `YYYYMMDD` strictly |
 | `Connexion "X" introuvable` | Forgot to connect first | Call `hfsql_connect` |
 | `Error connecting to the database` | Wrong DSN, server down, or bad credentials | Verify DSN exists in ODBC Manager, check server is reachable on port 4900 |
+| `ENOENT` or subprocess crash | PowerShell not found or ODBC driver missing | Server auto-detects `pwsh` or `powershell.exe` — ensure at least one is in PATH. Install HFSQL ODBC driver if missing. |
+| `spawn pwsh ENOENT` | PowerShell 7 not installed | Not needed — server v1.1.0+ auto-falls back to `powershell.exe` (5.1). Run `npm update -g hfsql-mcp` to get latest version. |
 
-## Remote Connections
+## Setting Up ODBC DSN
 
-To connect to a remote HFSQL server, create an ODBC DSN via registry:
+### Local server
+
+1. Open **ODBC Data Source Administrator** (64-bit) from Windows
+2. Click **Add** → select **HFSQL** driver
+3. Set: Server Name = `127.0.0.1`, Server Port = `4900`, Database = `yourdb`
+4. Give it a name (e.g. `kbpro`) → this is your `dsn` parameter
+
+### Remote server via PowerShell
+
+If you cannot access the ODBC GUI (e.g. headless server), create the DSN via PowerShell:
 
 ```powershell
+# Create the DSN entry
 Add-OdbcDsn -Name "remote-db" -DriverName "HFSQL" -DsnType "User" -SetPropertyValue @()
+
+# Set connection properties via registry (HFSQL driver requires this)
 Set-ItemProperty -Path "HKCU:\SOFTWARE\ODBC\ODBC.INI\remote-db" -Name "Server Name" -Value "192.168.1.102"
 Set-ItemProperty -Path "HKCU:\SOFTWARE\ODBC\ODBC.INI\remote-db" -Name "Server Port" -Value "4900"
 Set-ItemProperty -Path "HKCU:\SOFTWARE\ODBC\ODBC.INI\remote-db" -Name "Database" -Value "mydb"
@@ -151,4 +183,10 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\ODBC\ODBC.INI\remote-db" -Name "Database"
 Then connect:
 ```
 mcp__hfsql__hfsql_connect(id: "remote", dsn: "remote-db", uid: "admin", pwd: "admin")
+```
+
+### Verify connectivity before connecting
+
+```powershell
+Test-NetConnection -ComputerName 192.168.1.102 -Port 4900
 ```
