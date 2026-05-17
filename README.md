@@ -2,9 +2,38 @@
 
 Claude Code skill for interacting with **HFSQL databases** (PC SOFT / WinDev).
 
-Works with the [hfsql-mcp](https://github.com/YOUR_USER/hfsql-mcp) server.
+Works with the [hfsql-mcp](https://www.npmjs.com/package/hfsql-mcp) server.
 
 ## Installation
+
+### 1. Install the MCP server
+
+```bash
+npm install -g hfsql-mcp
+```
+
+### 2. Add the MCP server to Claude Code
+
+Run this command in your terminal:
+
+```bash
+claude mcp add hfsql -- npx hfsql-mcp
+```
+
+Or manually add to your `~/.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "hfsql": {
+      "command": "npx",
+      "args": ["hfsql-mcp"]
+    }
+  }
+}
+```
+
+### 3. Install the skill
 
 Copy `hfsql.md` into your Claude Code skills directory:
 
@@ -31,9 +60,10 @@ This skill teaches Claude Code how to:
 
 ## Prerequisites
 
-- The `hfsql-mcp` MCP server must be installed and configured in `.mcp.json`
-- An HFSQL ODBC DSN must be configured in Windows ODBC Manager
-- HFSQL ODBC driver installed (PC SOFT)
+- **Windows** with PowerShell 7+ (`pwsh`)
+- **Node.js** 18+
+- **HFSQL ODBC driver** installed (PC SOFT)
+- An **ODBC DSN** configured in Windows ODBC Manager pointing to your HFSQL server
 
 ## License
 
